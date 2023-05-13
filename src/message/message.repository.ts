@@ -8,19 +8,15 @@ export class MessageRepository extends Repository<Message> {
         super(Message, entityManager);
     }
 
-    async findMessagesByChatId(chatId: string): Promise<Message[]> {
+    async findMessagesByUser(chatId: string): Promise<Message[]> {
         return this.find({ where: { chatId } });
-    }
-
-    async findMessagesByUserAndChatId(user: User, chatId: string): Promise<Message[]> {
-        return this.find({ where: { user, chatId } });
     }
 
     async createMessage(message: Message): Promise<Message> {
         return this.save(message);
     }
 
-    async updateMessage(message: Message): Promise<Message> {
-        return this.save(message);
+    async deleteMessagesByUser(user: User) {
+        return this.delete({ user });
     }
 }

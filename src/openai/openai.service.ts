@@ -5,6 +5,7 @@ import {MessageRepository} from "../message/message.repository";
 import {Message} from "../message/message.entity";
 import {UserRepository} from "../user/user.repository";
 import {message} from "telegraf/filters";
+import {User} from "../user/user.entity";
 
 @Injectable()
 export class OpenaiService {
@@ -16,9 +17,7 @@ export class OpenaiService {
         }));
     }
 
-    async completePrompt(telegramId: string, chatId: string, prompt: string): Promise<string> {
-        const user = await this.userRepository.findByTelegramId(telegramId);
-
+    async completePrompt(user: User, chatId: string, prompt: string): Promise<string> {
         const userMessage = new Message();
         userMessage.chatId = chatId;
         userMessage.content = prompt;
@@ -26,7 +25,7 @@ export class OpenaiService {
         userMessage.role = 'user';
         await this.messageRepository.createMessage(userMessage);
 
-        const messages = await this.messageRepository.findMessagesByChatId(chatId);
+        const messages = await this.messageRepository.findMessagesByUser(chatId);
 
         let chatGptRequestMessages: ChatCompletionRequestMessage[] = [];
         if (messages.length) {
