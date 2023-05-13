@@ -1,13 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, Telegraf } from 'telegraf';
 import { OpenaiService } from '../openai/openai.service';
+import { UserRepository } from '../user/user.repository';
+import {User} from "../user/user.entity";
 
 @Injectable()
 export class TelegramBotService {
     private readonly bot: Telegraf<Context>;
     private readonly logger = new Logger(TelegramBotService.name);
 
-    constructor(private readonly openaiService: OpenaiService) {
+    constructor(private readonly openaiService: OpenaiService, private userRepository: UserRepository) {
         this.bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
         this.registerHandlers();
     }
@@ -44,8 +46,15 @@ export class TelegramBotService {
             return;
         }
 
+        const currentUser = await this.userRepository.findByTelegramId(ctx.from.username);
+        if (!currentUser) {
+            const newUser = new User();
+            newUser.telegramId = ctx.from.username;
+            await this.userRepository.createOrUpdate(newUser);
+        }
+
         try {
-            const generatedText = await this.openaiService.completePrompt(textPrompt);
+            const generatedText = await this.openaiService.completePrompt(ctx.from.username, ctx.from.username, textPrompt);
             await ctx.reply(generatedText);
         } catch (error) {
             this.logger.error(error);
