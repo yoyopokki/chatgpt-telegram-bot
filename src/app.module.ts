@@ -1,13 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { TelegramBotController } from './telegram-bot/telegram-bot.controller';
-import { TelegramBotService } from './telegram-bot/telegram-bot.service';
-import { OpenaiService } from './openai/openai.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user/user.entity';
 import { Message } from './message/message.entity';
 import { UserRepository } from './user/user.repository';
 import { MessageRepository } from './message/message.repository';
+import { TelegramBotModule } from './telegram-bot';
 
 @Module({
   imports: [
@@ -22,13 +20,7 @@ import { MessageRepository } from './message/message.repository';
       entities: [User, Message],
       synchronize: true,
     }),
-  ],
-  controllers: [TelegramBotController],
-  providers: [
-    UserRepository,
-    MessageRepository,
-    TelegramBotService,
-    OpenaiService,
+    TelegramBotModule,
   ],
 })
 export class AppModule {}
