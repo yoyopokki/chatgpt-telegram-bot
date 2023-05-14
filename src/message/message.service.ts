@@ -12,7 +12,10 @@ export class MessageService {
   ) {}
 
   async findMessagesByUser(chatId: string): Promise<Message[]> {
-    return this.messageRepository.find({ where: { chatId } });
+    return this.messageRepository.find({
+      where: { chatId },
+      order: { createdAt: 'ASC' },
+    });
   }
 
   async createMessage(message: Message): Promise<Message> {
