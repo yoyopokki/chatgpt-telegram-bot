@@ -10,11 +10,11 @@ export class TelegramBotService {
   private readonly logger = new Logger(TelegramBotService.name);
 
   private readonly mainMenuKeyboard = Markup.keyboard([
-    ['🤖 Справка', '✏️ Начать общение'],
-    ['🗑️ Удалить контекст'],
+    ['✏️ Начать общение', '🤖 Справка'],
   ]).resize();
   private readonly conversationMenuKeyboard = Markup.keyboard([
     ['🚪 Выйти из режима общения'],
+    ['🗑️ Удалить контекст'],
   ]).resize();
 
   private readonly conversationScene = new Scenes.BaseScene('conversation');
@@ -50,16 +50,19 @@ export class TelegramBotService {
     this.bot.command('generate', this.handleGenerateCommand.bind(this));
     this.bot.command('deletecontext', this.handleDeleteContext.bind(this));
 
-    this.bot.hears('🤖 Справка', this.handleHelpCommand.bind(this));
     this.bot.hears(
       '✏️ Начать общение',
       this.handleEnterConversation.bind(this),
     );
-    this.bot.hears('🗑️ Удалить контекст', this.handleDeleteContext.bind(this));
+    this.bot.hears('🤖 Справка', this.handleHelpCommand.bind(this));
 
     this.conversationScene.hears(
       '🚪 Выйти из режима общения',
       this.handleExitConversation.bind(this),
+    );
+    this.conversationScene.hears(
+      '🗑️ Удалить контекст',
+      this.handleDeleteContext.bind(this),
     );
     this.conversationScene.on('text', this.handleGenerateCommand.bind(this));
   }
