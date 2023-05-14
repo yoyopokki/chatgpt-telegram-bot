@@ -5,9 +5,8 @@ import {
   OpenAIApiFactory,
 } from 'openai';
 import * as process from 'process';
-import { Message } from '../message';
-import { User } from '../user/user.entity';
-import { MessageService } from '../message';
+import { Message, MessageService } from '../message';
+import { User } from '../user';
 
 @Injectable()
 export class OpenaiService {

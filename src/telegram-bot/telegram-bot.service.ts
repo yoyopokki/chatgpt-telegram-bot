@@ -1,8 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, Telegraf, Markup } from 'telegraf';
 import { OpenaiService } from '../openai';
-import { UserRepository } from '../user/user.repository';
-import { User } from '../user/user.entity';
+import { User, UserService } from '../user';
 import { MessageService } from '../message';
 
 @Injectable()
@@ -16,7 +15,7 @@ export class TelegramBotService {
 
   constructor(
     private readonly openaiService: OpenaiService,
-    private userRepository: UserRepository,
+    private userService: UserService,
     private messageService: MessageService,
   ) {
     this.bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
@@ -68,13 +67,13 @@ export class TelegramBotService {
         return;
       }
 
-      let currentUser = await this.userRepository.findByTelegramId(
+      let currentUser = await this.userService.findByTelegramId(
         ctx.from.username,
       );
       if (!currentUser) {
         const newUser = new User();
         newUser.telegramId = ctx.from.username;
-        currentUser = await this.userRepository.createOrUpdate(newUser);
+        currentUser = await this.userService.createOrUpdate(newUser);
       }
 
       try {
@@ -95,7 +94,7 @@ export class TelegramBotService {
   }
 
   private async handleDeleteContext(ctx: Context): Promise<void> {
-    const currentUser = await this.userRepository.findByTelegramId(
+    const currentUser = await this.userService.findByTelegramId(
       ctx.from.username,
     );
     if (currentUser) {
