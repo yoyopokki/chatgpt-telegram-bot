@@ -3,12 +3,12 @@ import { Message } from '../message/message.entity';
 
 @Entity()
 export class User {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    telegramId: string;
+  @Column()
+  telegramId: string;
 
-    @OneToMany(() => Message, message => message.user)
-    messages: Message[];
+  @OneToMany(() => Message, (message) => message.user)
+  messages: Message[];
 }

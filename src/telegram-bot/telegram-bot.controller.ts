@@ -3,12 +3,10 @@ import { TelegramBotService } from './telegram-bot.service';
 
 @Controller('/telegram-bot')
 export class TelegramBotController {
-    constructor(
-        private readonly telegramBotService: TelegramBotService,
-    ) {}
+  constructor(private readonly telegramBotService: TelegramBotService) {}
 
-    @Get('/start')
-    startBot() {
-        this.telegramBotService.start();
-    }
+  @Get('/start')
+  startBot() {
+    this.telegramBotService.start();
+  }
 }

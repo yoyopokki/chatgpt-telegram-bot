@@ -3,21 +3,21 @@ import { User } from '../user/user.entity';
 
 @Entity()
 export class Message {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    chatId: string;
+  @Column()
+  chatId: string;
 
-    @Column()
-    content: string;
+  @Column()
+  content: string;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    createdAt: Date;
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
 
-    @Column()
-    role: 'user' | 'assistant';
+  @Column()
+  role: 'user' | 'assistant';
 
-    @ManyToOne(() => User, user => user.messages)
-    user: User;
+  @ManyToOne(() => User, (user) => user.messages)
+  user: User;
 }
