@@ -22,21 +22,20 @@ export class TelegramBotService {
     this.registerHandlers();
   }
 
-  start(): void {
-    this.bot.launch().then(() => {
-      this.logger.log('Бот запущен');
+  async start(): Promise<void> {
+    await this.bot.launch({
+      dropPendingUpdates: true,
     });
+
+    this.logger.log('Бот запущен');
   }
 
   private registerHandlers(): void {
     this.bot.start(this.handleStartCommand.bind(this));
     this.bot.help(this.handleHelpCommand.bind(this));
+
     this.bot.command('generate', this.handleGenerateCommand.bind(this));
     this.bot.command('deletecontext', this.handleDeleteContext.bind(this));
-  }
-
-  private async handleStartCommand(ctx: Context): Promise<void> {
-    await ctx.reply('Выберите действие:', this.mainMenuKeyboard);
 
     this.bot.hears('🤖 Справка', this.handleHelpCommand.bind(this));
     this.bot.hears(
@@ -44,6 +43,10 @@ export class TelegramBotService {
       this.handleGenerateCommand.bind(this),
     );
     this.bot.hears('🗑️ Удалить контекст', this.handleDeleteContext.bind(this));
+  }
+
+  private async handleStartCommand(ctx: Context): Promise<void> {
+    await ctx.reply('Выберите действие:', this.mainMenuKeyboard);
   }
 
   private async handleHelpCommand(ctx: Context): Promise<void> {
