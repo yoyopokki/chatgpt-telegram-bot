@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   ChatCompletionRequestMessage,
   Configuration,
@@ -60,6 +60,8 @@ export class OpenaiService {
     aiMessage.user = user;
     aiMessage.role = 'assistant';
     await this.messageService.createMessage(aiMessage);
+
+    Logger.log(chatGptRequestMessages);
 
     return completions.data.choices[0].message.content.trim();
   }
