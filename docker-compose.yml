@@ -1,0 +1,64 @@
+version: '3.8'
+
+networks:
+  chatgpt-telegram-bot-default:
+    external: false
+
+services:
+  chatgpt-telegram-bot-nginx:
+    image: nginx:latest
+    container_name: chatgpt-telegram-bot-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/ssl:/etc/nginx/ssl
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - chatgpt-telegram-bot-api
+    networks:
+      - chatgpt-telegram-bot-default
+
+  chatgpt-telegram-bot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chatgpt-telegram-bot-api
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./api:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - chatgpt-telegram-bot-db
+      - chatgpt-telegram-bot-redis
+    networks:
+      - chatgpt-telegram-bot-default
+
+  chatgpt-telegram-bot-db:
+    image: postgres:12
+    container_name: chatgpt-telegram-bot-db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRESQL_DATABASE}
+      POSTGRES_USER: ${POSTGRESQL_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRESQL_PASSWORD}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - chatgpt-telegram-bot-default
+
+  chatgpt-telegram-bot-redis:
+    image: redis:latest
+    container_name: chatgpt-telegram-bot-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - chatgpt-telegram-bot-default
