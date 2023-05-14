@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { OpenaiService } from './openai.service';
-import { MessageRepository } from '../message/message.repository';
+import { MessageModule } from '../message';
 
 @Module({
-  providers: [OpenaiService, MessageRepository],
+  imports: [MessageModule],
+  providers: [OpenaiService],
   exports: [OpenaiService],
 })
 export class OpenaiModule {}

@@ -1,9 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, Telegraf, Markup } from 'telegraf';
-import { OpenaiService } from '../openai/openai.service';
+import { OpenaiService } from '../openai';
 import { UserRepository } from '../user/user.repository';
 import { User } from '../user/user.entity';
-import { MessageRepository } from '../message/message.repository';
+import { MessageService } from '../message';
 
 @Injectable()
 export class TelegramBotService {
@@ -17,7 +17,7 @@ export class TelegramBotService {
   constructor(
     private readonly openaiService: OpenaiService,
     private userRepository: UserRepository,
-    private messageRepository: MessageRepository,
+    private messageService: MessageService,
   ) {
     this.bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
     this.registerHandlers();
@@ -99,7 +99,7 @@ export class TelegramBotService {
       ctx.from.username,
     );
     if (currentUser) {
-      await this.messageRepository.deleteMessagesByUser(currentUser);
+      await this.messageService.deleteMessagesByUser(currentUser);
     }
 
     await ctx.reply('Контекст удален');
