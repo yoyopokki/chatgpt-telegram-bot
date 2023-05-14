@@ -9,6 +9,10 @@ import { MessageRepository } from '../message/message.repository';
 export class TelegramBotService {
   private readonly bot: Telegraf<Context>;
   private readonly logger = new Logger(TelegramBotService.name);
+  private readonly mainMenuKeyboard = Markup.keyboard([
+    ['🤖 Справка', '✏️ Генерировать текст'],
+    ['🗑️ Удалить контекст'],
+  ]).resize();
 
   constructor(
     private readonly openaiService: OpenaiService,
@@ -33,11 +37,8 @@ export class TelegramBotService {
   }
 
   private async handleStartCommand(ctx: Context): Promise<void> {
-    const keyboard = Markup.keyboard([
-      ['🤖 Справка', '✏️ Генерировать текст'],
-      ['🗑️ Удалить контекст'],
-    ]).resize();
-    await ctx.reply('Выберите действие:', keyboard);
+    await ctx.reply('Выберите действие:', this.mainMenuKeyboard);
+
     this.bot.hears('🤖 Справка', this.handleHelpCommand.bind(this));
     this.bot.hears(
       '✏️ Генерировать текст',
@@ -47,10 +48,9 @@ export class TelegramBotService {
   }
 
   private async handleHelpCommand(ctx: Context): Promise<void> {
-    await ctx.reply(`
-        /generate <текст> - Генерация текста с помощью OpenAI GPT-3.5.\n\n
-        /deletecontext - Удаление контекста
-    `);
+    await ctx.reply(
+      `Привет, я бот, который поможет тебе пользоваться ChatGPT 3.5 и в х*й не дуть`,
+    );
   }
 
   private async handleGenerateCommand(ctx: Context): Promise<void> {
@@ -60,6 +60,8 @@ export class TelegramBotService {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const textPrompt = ctx.message.text;
+
+      Logger.log(ctx.message);
 
       if (!textPrompt) {
         await ctx.reply('Вы ничего не ввели');
@@ -86,6 +88,9 @@ export class TelegramBotService {
         this.logger.error(error);
         await ctx.reply('Ошибка генерации текста');
       }
+
+      // Выводим главное меню
+      await ctx.reply('Выберите действие:', this.mainMenuKeyboard);
     });
   }
 
