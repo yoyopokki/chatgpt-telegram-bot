@@ -20,21 +20,43 @@ export class OpenaiService {
     );
   }
 
+  private async getChatCompletions(
+    chatGptRequestMessages: ChatCompletionRequestMessage[],
+  ) {
+    return this.openaiApi.createChatCompletion({
+      model: 'gpt-3.5-turbo',
+      messages: chatGptRequestMessages,
+    });
+  }
+
   async completePrompt(
     user: User,
     chatId: string,
     prompt: string,
   ): Promise<string> {
-    const userMessage = new Message();
-    userMessage.chatId = chatId;
-    userMessage.content = prompt;
-    userMessage.user = user;
-    userMessage.role = 'user';
-    await this.messageService.createMessage(userMessage);
+    await this.saveUserMessage(user, chatId, prompt);
 
     const messages = await this.messageService.findMessagesByUser(chatId);
+    const chatGptRequestMessages = this.createChatGptRequestMessages(
+      messages,
+      prompt,
+    );
 
+    const completions = await this.getChatCompletions(chatGptRequestMessages);
+    const aiMessageContent = completions.data.choices[0].message.content.trim();
+    await this.saveAiMessage(user, chatId, aiMessageContent);
+
+    Logger.log(chatGptRequestMessages);
+
+    return aiMessageContent;
+  }
+
+  private createChatGptRequestMessages(
+    messages: Message[],
+    prompt: string,
+  ): ChatCompletionRequestMessage[] {
     let chatGptRequestMessages: ChatCompletionRequestMessage[] = [];
+
     if (messages.length) {
       chatGptRequestMessages = messages.map((message) => ({
         role: message.role,
@@ -49,20 +71,34 @@ export class OpenaiService {
       ];
     }
 
-    const completions = await this.openaiApi.createChatCompletion({
-      model: 'gpt-3.5-turbo',
-      messages: chatGptRequestMessages,
-    });
+    return chatGptRequestMessages;
+  }
 
+  private async saveAiMessage(
+    user: User,
+    chatId: string,
+    content: string,
+  ): Promise<Message> {
     const aiMessage = new Message();
     aiMessage.chatId = chatId;
-    aiMessage.content = completions.data.choices[0].message.content.trim();
+    aiMessage.content = content;
     aiMessage.user = user;
     aiMessage.role = 'assistant';
-    await this.messageService.createMessage(aiMessage);
 
-    Logger.log(chatGptRequestMessages);
+    return this.messageService.createMessage(aiMessage);
+  }
 
-    return completions.data.choices[0].message.content.trim();
+  private async saveUserMessage(
+    user: User,
+    chatId: string,
+    content: string,
+  ): Promise<Message> {
+    const userMessage = new Message();
+    userMessage.chatId = chatId;
+    userMessage.content = content;
+    userMessage.user = user;
+    userMessage.role = 'user';
+
+    return this.messageService.createMessage(userMessage);
   }
 }
