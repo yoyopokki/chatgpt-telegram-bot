@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user';
 import { Message } from './message';
 import { TelegramBotModule } from './telegram-bot';
+import { RedisModule } from '@liaoliaots/nestjs-redis';
 
 @Module({
   imports: [
@@ -20,6 +21,17 @@ import { TelegramBotModule } from './telegram-bot';
         database: configService.get('POSTGRESQL_DATABASE'),
         entities: [User, Message],
         synchronize: true,
+      }),
+    }),
+    RedisModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        config: {
+          host: configService.get('REDIS_HOST'),
+          port: configService.get('REDIS_PORT'),
+          password: configService.get('REDIS_PASSWORD'),
+        },
       }),
     }),
     TelegramBotModule,

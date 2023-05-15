@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Context, Telegraf, Markup, session, Scenes } from 'telegraf';
+import Redis from 'ioredis';
+import { RedisService } from '@liaoliaots/nestjs-redis';
 import { OpenaiService } from '../openai';
 import { User, UserService } from '../user';
 import { MessageService } from '../message';
@@ -24,6 +26,7 @@ import {
 export class TelegramBotService {
   private readonly bot: Telegraf<Context>;
   private readonly logger = new Logger(TelegramBotService.name);
+  private readonly redis: Redis;
 
   private readonly mainMenuKeyboard =
     Markup.keyboard(MAIN_MENU_KEYBOARD).resize();
@@ -37,6 +40,7 @@ export class TelegramBotService {
     private readonly openaiService: OpenaiService,
     private userService: UserService,
     private messageService: MessageService,
+    private redisService: RedisService,
   ) {
     this.bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
     this.bot.use(session());
@@ -45,6 +49,8 @@ export class TelegramBotService {
     // @ts-ignore
     const stage = new Scenes.Stage([this.conversationScene]);
     this.bot.use(stage.middleware());
+
+    this.redis = this.redisService.getClient();
 
     this.registerHandlers();
   }
@@ -111,16 +117,20 @@ export class TelegramBotService {
   }
 
   private async createOrUpdateUser(ctx: Context): Promise<User> {
-    const existUser = await this.userService.findByTelegramId(
-      ctx.from.username,
-    );
+    const userRedisKey = `user:${ctx.from.username}`;
+
+    const userField = await this.redis.get(userRedisKey);
 
     const newUser = new User();
-    if (existUser) {
-      newUser.id = existUser.id;
+    if (userField) {
+      const user = JSON.parse(userField);
+      newUser.id = user.id;
     }
     newUser.telegramId = ctx.from.username;
     newUser.telegramChatId = ctx.message.chat.id;
+
+    const savedUser = await this.userService.createOrUpdate(newUser);
+    await this.redis.set(userRedisKey, JSON.stringify(savedUser));
 
     return this.userService.createOrUpdate(newUser);
   }
@@ -156,16 +166,16 @@ export class TelegramBotService {
     // @ts-ignore
     const textPrompt = ctx.message.text;
 
-    this.logger.log(ctx.message);
-
     if (!textPrompt) {
       await ctx.reply(EMPTY_TEXT_MESSAGE);
       return;
     }
 
-    const currentUser = await this.userService.findByTelegramId(
-      ctx.from.username,
-    );
+    const userRedisKey = `user:${ctx.from.username}`;
+    const currentUserField = await this.redis.get(userRedisKey);
+    const currentUser = currentUserField
+      ? JSON.parse(currentUserField)
+      : await this.userService.findByTelegramId(ctx.from.username);
 
     try {
       const generatedText = await this.openaiService.completePrompt(

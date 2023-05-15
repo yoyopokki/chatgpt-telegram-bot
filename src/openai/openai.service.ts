@@ -46,8 +46,6 @@ export class OpenaiService {
     const aiMessageContent = completions.data.choices[0].message.content.trim();
     await this.saveAiMessage(user, chatId, aiMessageContent);
 
-    Logger.log(chatGptRequestMessages);
-
     return aiMessageContent;
   }
 
