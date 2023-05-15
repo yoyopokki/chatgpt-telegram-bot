@@ -51,7 +51,7 @@ export class TelegramBotService {
       try {
         await this.bot.telegram.sendMessage(
           user.telegramChatId,
-          'Бот был обновлен и перезапущен. Чтобы начать работу, выберите действие:',
+          'Бот был обновлен и перезапущен. Выберите действие:',
           this.mainMenuKeyboard,
         );
       } catch (error) {
