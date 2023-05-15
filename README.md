@@ -23,6 +23,10 @@ POSTGRESQL_PORT=<your-postgres-port>
 POSTGRESQL_USERNAME=<your-postgres-username>
 POSTGRESQL_PASSWORD=<your-postgres-password>
 POSTGRESQL_DATABASE=<your-postgres-database>
+
+REDIS_HOST=<your-redis-host>
+REDIS_PORT=<your-redis-port>
+REDIS_PASSWORD=<your-redis-password>
 ```
 
 ### Установка и запуск Docker Compose
@@ -35,7 +39,7 @@ docker-compose up
 ### Запуск без Docker
 Если вы хотите запустить приложение без использования Docker, выполните следующие шаги:
 
-- Установите Node.js 16 и PostgreSQL 12 на свой компьютер.
+- Установите Node.js 16, PostgreSQL 12 и Redis 7 на свой компьютер.
 
 - Создайте базу данных в PostgreSQL 12 и настройте переменные окружения в файле .env.
 
@@ -44,10 +48,17 @@ docker-compose up
 ```bash
 npm install
 ```
-Запустите приложение, выполнив команду:
+Запустите приложение, выполнив команду для разработки:
 
 ```bash
 npm run start:dev
 ```
+
+или для production:
+
+```bash
+npm run start:prod
+```
+
 После запуска приложение будет доступно на http://localhost:3000/.
 Чтобы запустить телеграм-бота, необходимо перейти по ссылке http://localhost:3000/telegram-bot/start.
