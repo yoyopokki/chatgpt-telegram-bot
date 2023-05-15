@@ -132,7 +132,7 @@ export class TelegramBotService {
     const savedUser = await this.userService.createOrUpdate(newUser);
     await this.redis.set(userRedisKey, JSON.stringify(savedUser));
 
-    return this.userService.createOrUpdate(newUser);
+    return savedUser;
   }
 
   private async handleEnterConversation(ctx: Context): Promise<void> {
