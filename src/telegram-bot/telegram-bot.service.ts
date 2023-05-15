@@ -4,12 +4,20 @@ import { OpenaiService } from '../openai';
 import { User, UserService } from '../user';
 import { MessageService } from '../message';
 import {
+  BOT_START_MESSAGE,
+  BOT_UPDATE_MESSAGE,
+  CHANGE_ACTION_MESSAGE,
+  CHAT_GPT_ERROR_MESSAGE,
   CONVERSATION_MENU_KEYBOARD,
   DELETE_CONTEXT_BUTTON,
+  DELETE_CONTEXT_MESSAGE,
+  EMPTY_TEXT_MESSAGE,
   EXIT_CONVERSATION_BUTTON,
   HELP_BUTTON,
   MAIN_MENU_KEYBOARD,
   START_CONVERSATION_BUTTON,
+  START_CONVERSATION_MESSAGE,
+  WELCOME_MESSAGE,
 } from './telegram-bot.constants';
 
 @Injectable()
@@ -48,7 +56,7 @@ export class TelegramBotService {
       dropPendingUpdates: true,
     });
 
-    this.logger.log('Бот запущен');
+    this.logger.log(BOT_START_MESSAGE);
   }
 
   async update(): Promise<void> {
@@ -57,7 +65,7 @@ export class TelegramBotService {
       try {
         await this.bot.telegram.sendMessage(
           user.telegramChatId,
-          'Бот был обновлен и перезапущен. Выберите действие:',
+          BOT_UPDATE_MESSAGE,
           this.mainMenuKeyboard,
         );
       } catch (error) {
@@ -95,14 +103,11 @@ export class TelegramBotService {
   }
 
   private async showMainMenu(ctx: Context): Promise<void> {
-    await ctx.reply('Выберите действие:', this.mainMenuKeyboard);
+    await ctx.reply(CHANGE_ACTION_MESSAGE, this.mainMenuKeyboard);
   }
 
   private async showConversationMenu(ctx: Context): Promise<void> {
-    await ctx.reply(
-      'Вы в режиме общения с ботом, еб.... кхм кхм общайтесь',
-      this.conversationMenuKeyboard,
-    );
+    await ctx.reply(START_CONVERSATION_MESSAGE, this.conversationMenuKeyboard);
   }
 
   private async createOrUpdateUser(ctx: Context): Promise<User> {
@@ -143,14 +148,10 @@ export class TelegramBotService {
   }
 
   private async handleHelpCommand(ctx: Context): Promise<void> {
-    await ctx.reply(
-      `Привет, я бот, который поможет тебе пользоваться ChatGPT 3.5 и в х*й не дуть`,
-    );
+    await ctx.reply(WELCOME_MESSAGE);
   }
 
   private async handleGenerateCommand(ctx: Context): Promise<void> {
-    await this.createOrUpdateUser(ctx);
-
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const textPrompt = ctx.message.text;
@@ -158,7 +159,7 @@ export class TelegramBotService {
     this.logger.log(ctx.message);
 
     if (!textPrompt) {
-      await ctx.reply('Вы ничего не ввели');
+      await ctx.reply(EMPTY_TEXT_MESSAGE);
       return;
     }
 
@@ -175,7 +176,7 @@ export class TelegramBotService {
       await ctx.reply(generatedText);
     } catch (error) {
       this.logger.error(error);
-      await ctx.reply('Ошибка генерации текста');
+      await ctx.reply(CHAT_GPT_ERROR_MESSAGE);
     }
   }
 
@@ -187,7 +188,7 @@ export class TelegramBotService {
       await this.messageService.deleteMessagesByUser(currentUser);
     }
 
-    await ctx.reply('Контекст удален');
+    await ctx.reply(DELETE_CONTEXT_MESSAGE);
   }
 
   private async handleCheckInvalidChatId(ctx: Context): Promise<void> {
