@@ -166,8 +166,6 @@ export class TelegramBotService {
     // @ts-ignore
     const textPrompt = ctx.message.text;
 
-    this.logger.debug(ctx.message);
-
     if (!textPrompt) {
       await ctx.reply(EMPTY_TEXT_MESSAGE);
       return;
