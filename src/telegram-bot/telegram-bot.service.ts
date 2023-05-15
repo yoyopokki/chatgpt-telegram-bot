@@ -3,19 +3,25 @@ import { Context, Telegraf, Markup, session, Scenes } from 'telegraf';
 import { OpenaiService } from '../openai';
 import { User, UserService } from '../user';
 import { MessageService } from '../message';
+import {
+  CONVERSATION_MENU_KEYBOARD,
+  DELETE_CONTEXT_BUTTON,
+  EXIT_CONVERSATION_BUTTON,
+  HELP_BUTTON,
+  MAIN_MENU_KEYBOARD,
+  START_CONVERSATION_BUTTON,
+} from './telegram-bot.constants';
 
 @Injectable()
 export class TelegramBotService {
   private readonly bot: Telegraf<Context>;
   private readonly logger = new Logger(TelegramBotService.name);
 
-  private readonly mainMenuKeyboard = Markup.keyboard([
-    ['✏️ Начать общение', '🤖 Справка'],
-  ]).resize();
-  private readonly conversationMenuKeyboard = Markup.keyboard([
-    ['🚪 Выйти из режима общения'],
-    ['🗑️ Удалить контекст'],
-  ]).resize();
+  private readonly mainMenuKeyboard =
+    Markup.keyboard(MAIN_MENU_KEYBOARD).resize();
+  private readonly conversationMenuKeyboard = Markup.keyboard(
+    CONVERSATION_MENU_KEYBOARD,
+  ).resize();
 
   private readonly conversationScene = new Scenes.BaseScene('conversation');
 
@@ -70,19 +76,19 @@ export class TelegramBotService {
     this.bot.command('deletecontext', this.handleDeleteContext.bind(this));
 
     this.bot.hears(
-      '✏️ Начать общение',
+      START_CONVERSATION_BUTTON,
       this.handleEnterConversation.bind(this),
     );
-    this.bot.hears('🤖 Справка', this.handleHelpCommand.bind(this));
+    this.bot.hears(HELP_BUTTON, this.handleHelpCommand.bind(this));
 
     this.bot.on('message', this.handleCheckInvalidChatId.bind(this));
 
     this.conversationScene.hears(
-      '🚪 Выйти из режима общения',
+      EXIT_CONVERSATION_BUTTON,
       this.handleExitConversation.bind(this),
     );
     this.conversationScene.hears(
-      '🗑️ Удалить контекст',
+      DELETE_CONTEXT_BUTTON,
       this.handleDeleteContext.bind(this),
     );
     this.conversationScene.on('text', this.handleGenerateCommand.bind(this));
