@@ -36,11 +36,30 @@ export class TelegramBotService {
   }
 
   async start(): Promise<void> {
+    await this.update();
+
     await this.bot.launch({
       dropPendingUpdates: true,
     });
 
     this.logger.log('Бот запущен');
+  }
+
+  async update(): Promise<void> {
+    const users = await this.userService.findAll();
+    for (const user of users) {
+      try {
+        await this.bot.telegram.sendMessage(
+          user.telegramChatId,
+          'Бот был обновлен и перезапущен. Чтобы начать работу, выберите действие:',
+          this.mainMenuKeyboard,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Не удалось уведомить об обновлении пользователя ${user.telegramId}: ${error}`,
+        );
+      }
+    }
   }
 
   private registerHandlers(): void {
@@ -55,6 +74,8 @@ export class TelegramBotService {
       this.handleEnterConversation.bind(this),
     );
     this.bot.hears('🤖 Справка', this.handleHelpCommand.bind(this));
+
+    this.bot.on('message', this.handleCheckInvalidChatId.bind(this));
 
     this.conversationScene.hears(
       '🚪 Выйти из режима общения',
@@ -78,6 +99,21 @@ export class TelegramBotService {
     );
   }
 
+  private async createOrUpdateUser(ctx: Context): Promise<User> {
+    const existUser = await this.userService.findByTelegramId(
+      ctx.from.username,
+    );
+
+    const newUser = new User();
+    if (existUser) {
+      newUser.id = existUser.id;
+    }
+    newUser.telegramId = ctx.from.username;
+    newUser.telegramChatId = ctx.message.chat.id;
+
+    return this.userService.createOrUpdate(newUser);
+  }
+
   private async handleEnterConversation(ctx: Context): Promise<void> {
     await this.showConversationMenu(ctx);
 
@@ -95,6 +131,8 @@ export class TelegramBotService {
   }
 
   private async handleStartCommand(ctx: Context): Promise<void> {
+    await this.createOrUpdateUser(ctx);
+
     await this.showMainMenu(ctx);
   }
 
@@ -105,25 +143,22 @@ export class TelegramBotService {
   }
 
   private async handleGenerateCommand(ctx: Context): Promise<void> {
+    await this.createOrUpdateUser(ctx);
+
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const textPrompt = ctx.message.text;
 
-    Logger.log(ctx.message);
+    this.logger.log(ctx.message);
 
     if (!textPrompt) {
       await ctx.reply('Вы ничего не ввели');
       return;
     }
 
-    let currentUser = await this.userService.findByTelegramId(
+    const currentUser = await this.userService.findByTelegramId(
       ctx.from.username,
     );
-    if (!currentUser) {
-      const newUser = new User();
-      newUser.telegramId = ctx.from.username;
-      currentUser = await this.userService.createOrUpdate(newUser);
-    }
 
     try {
       const generatedText = await this.openaiService.completePrompt(
@@ -147,5 +182,15 @@ export class TelegramBotService {
     }
 
     await ctx.reply('Контекст удален');
+  }
+
+  private async handleCheckInvalidChatId(ctx: Context): Promise<void> {
+    const currentUser = await this.userService.findByTelegramId(
+      ctx.from.username,
+    );
+    if (currentUser && !currentUser.telegramChatId) {
+      await this.createOrUpdateUser(ctx);
+      await this.update();
+    }
   }
 }

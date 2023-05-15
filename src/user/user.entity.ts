@@ -9,6 +9,9 @@ export class User {
   @Column()
   telegramId: string;
 
+  @Column('integer', { default: 0 })
+  telegramChatId: number;
+
   @OneToMany(() => Message, (message) => message.user)
   messages: Message[];
 }
