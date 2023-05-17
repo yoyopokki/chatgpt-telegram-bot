@@ -14,6 +14,6 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan "${{ env.DEPLOYMENT_SERVER }}" >> ~/.ssh/known_hosts
+          ssh-keyscan ${{ vars.DEPLOYMENT_SERVER }} >> ~/.ssh/known_hosts
       - name: Deploy to server
-        run: ssh "${{ env.DEPLOYMENT_SERVER_USER }}@${{ env.DEPLOYMENT_SERVER }}" 'cd ~/backend && git pull && docker-compose up -d --build'
+        run: ssh ${{ vars.DEPLOYMENT_SERVER_USER }}@${{ vars.DEPLOYMENT_SERVER }} 'cd ~/backend && git pull && docker-compose up -d --build'
