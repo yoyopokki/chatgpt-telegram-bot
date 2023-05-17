@@ -68,17 +68,24 @@ export class TelegramBotService {
   async update(): Promise<void> {
     const users = await this.userService.findAll();
     for (const user of users) {
-      try {
-        await this.bot.telegram.sendMessage(
-          user.telegramChatId,
-          BOT_UPDATE_MESSAGE,
-          this.mainMenuKeyboard,
-        );
-      } catch (error) {
-        this.logger.error(
-          `Не удалось уведомить об обновлении пользователя ${user.telegramId}: ${error}`,
-        );
-      }
+      await this.updateByUser(user.telegramId, user.telegramChatId);
+    }
+  }
+
+  private async updateByUser(
+    telegramId: string,
+    telegramChatId: number,
+  ): Promise<void> {
+    try {
+      await this.bot.telegram.sendMessage(
+        telegramChatId,
+        BOT_UPDATE_MESSAGE,
+        this.mainMenuKeyboard,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Не удалось уведомить об обновлении пользователя ${telegramId}: ${error}`,
+      );
     }
   }
 
@@ -209,7 +216,7 @@ export class TelegramBotService {
     );
     if (currentUser && !currentUser.telegramChatId) {
       await this.createOrUpdateUser(ctx);
-      await this.update();
+      await this.updateByUser(ctx.from.username, ctx.message.chat.id);
     }
   }
 }
