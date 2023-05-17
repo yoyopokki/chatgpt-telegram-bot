@@ -171,6 +171,8 @@ export class TelegramBotService {
       return;
     }
 
+    await ctx.sendChatAction('typing');
+
     const userRedisKey = `user:${ctx.from.username}`;
     const currentUserField = await this.redis.get(userRedisKey);
     const currentUser = currentUserField

@@ -1,0 +1,19 @@
+name: Build and Deploy
+on:
+ push:
+ branches:
+ - main
+jobs:
+ build-and-deploy:
+ runs-on: ubuntu-latest
+ steps:
+ - name: Checkout code
+ uses: actions/checkout@v2
+ - name: Setup SSH
+ run: |
+ mkdir -p ~/.ssh
+ echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+ chmod 600 ~/.ssh/id_rsa
+ ssh-keyscan ${{ env.DEPLOYMENT_SERVER }} >> ~/.ssh/known_hosts
+ - name: Deploy to server
+ run: ssh ${{ env.DEPLOYMENT_SERVER_USER }}@${{ env.DEPLOYMENT_SERVER }} 'cd ~/backend && git pull && docker-compose up -d --build'
