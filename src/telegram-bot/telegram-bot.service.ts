@@ -144,6 +144,10 @@ export class TelegramBotService {
       ctx.from.username,
       ctx.message.chat.id,
     );
+
+    this.logger.log(user.raw);
+
+    await this.redis.del([userRedisKey]);
     await this.redis.set(userRedisKey, JSON.stringify(user.raw));
   }
 
