@@ -10,7 +10,8 @@ import { User } from '../user';
 
 @Injectable()
 export class OpenaiService {
-  private openaiApi: ReturnType<typeof OpenAIApiFactory>;
+  private readonly openaiApi: ReturnType<typeof OpenAIApiFactory>;
+  private readonly logger = new Logger(OpenaiService.name);
 
   constructor(private messageService: MessageService) {
     this.openaiApi = OpenAIApiFactory(
@@ -41,6 +42,8 @@ export class OpenaiService {
       messages,
       prompt,
     );
+
+    this.logger.log(chatGptRequestMessages);
 
     const completions = await this.getChatCompletions(chatGptRequestMessages);
     const aiMessageContent = completions.data.choices[0].message.content.trim();
