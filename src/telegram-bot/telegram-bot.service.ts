@@ -219,7 +219,9 @@ export class TelegramBotService {
     const userRedisKey = `user:${ctx.from.username}`;
     const userField = await this.redis.get(userRedisKey);
 
-    const currentUser = userField ? JSON.parse(userField) : null;
+    const currentUser = userField
+      ? JSON.parse(userField)
+      : await this.userService.findByTelegramId(ctx.from.username);
     this.logger.log(userField, currentUser);
     if (currentUser) {
       await this.messageService.deleteMessagesByUser(currentUser);
