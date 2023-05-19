@@ -145,10 +145,10 @@ export class TelegramBotService {
       ctx.message.chat.id,
     );
 
-    this.logger.log(user.raw);
+    this.logger.log(user);
 
     await this.redis.del([userRedisKey]);
-    await this.redis.set(userRedisKey, JSON.stringify(user.raw));
+    await this.redis.set(userRedisKey, JSON.stringify(user));
   }
 
   private async handleEnterConversation(ctx: Context): Promise<void> {
@@ -232,10 +232,17 @@ export class TelegramBotService {
     const userRedisKey = `user:${ctx.from.username}`;
     const userField = await this.redis.get(userRedisKey);
 
-    const currentUser = userField ? JSON.parse(userField) : null;
+    const currentUser = userField
+      ? JSON.parse(userField)
+      : await this.userService.findByTelegramId(ctx.from.username);
+
     if (currentUser && !currentUser.telegramChatId) {
       await this.updateUserTelegramInfo(ctx);
       await this.updateByUser(ctx.from.username, ctx.message.chat.id);
+    }
+
+    if (!currentUser) {
+      await this.createUser(ctx);
     }
   }
 }

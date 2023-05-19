@@ -22,13 +22,15 @@ export class UserService {
   async updateTelegramInfo(
     telegramId: string,
     telegramChatId?: number,
-  ): Promise<UpdateResult> {
-    return this.userRepository.update(
+  ): Promise<User> {
+    await this.userRepository.update(
       { telegramId },
       {
         telegramChatId,
       },
     );
+
+    return this.findByTelegramId(telegramId);
   }
 
   async findAll(): Promise<User[]> {
