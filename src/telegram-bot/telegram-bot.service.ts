@@ -220,6 +220,7 @@ export class TelegramBotService {
     const userField = await this.redis.get(userRedisKey);
 
     const currentUser = userField ? JSON.parse(userField) : null;
+    this.logger.log(userField, currentUser);
     if (currentUser) {
       await this.messageService.deleteMessagesByUser(currentUser);
     }
