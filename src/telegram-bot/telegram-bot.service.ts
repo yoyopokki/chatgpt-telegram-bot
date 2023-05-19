@@ -216,13 +216,9 @@ export class TelegramBotService {
   }
 
   private async handleDeleteContext(ctx: Context): Promise<void> {
-    const userRedisKey = `user:${ctx.from.username}`;
-    const userField = await this.redis.get(userRedisKey);
-
-    const currentUser = userField
-      ? JSON.parse(userField)
-      : await this.userService.findByTelegramId(ctx.from.username);
-    this.logger.log(userField, currentUser);
+    const currentUser = await this.userService.findByTelegramId(
+      ctx.from.username,
+    );
     if (currentUser) {
       await this.messageService.deleteMessagesByUser(currentUser);
     }
