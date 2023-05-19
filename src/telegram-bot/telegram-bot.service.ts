@@ -104,6 +104,7 @@ export class TelegramBotService {
 
     this.bot.on('message', this.handleCheckInvalidChatId.bind(this));
 
+    this.conversationScene.command('start', this.handleStartCommand.bind(this));
     this.conversationScene.hears(
       EXIT_CONVERSATION_BUTTON,
       this.handleExitConversation.bind(this),
@@ -123,23 +124,27 @@ export class TelegramBotService {
     await ctx.reply(START_CONVERSATION_MESSAGE, this.conversationMenuKeyboard);
   }
 
-  private async createOrUpdateUser(ctx: Context): Promise<User> {
+  private async createUser(ctx: Context): Promise<User> {
     const userRedisKey = `user:${ctx.from.username}`;
 
-    const userField = await this.redis.get(userRedisKey);
-
     const newUser = new User();
-    if (userField) {
-      const user = JSON.parse(userField);
-      newUser.id = user.id;
-    }
     newUser.telegramId = ctx.from.username;
     newUser.telegramChatId = ctx.message.chat.id;
 
-    const savedUser = await this.userService.createOrUpdate(newUser);
+    const savedUser = await this.userService.createUser(newUser);
     await this.redis.set(userRedisKey, JSON.stringify(savedUser));
 
     return savedUser;
+  }
+
+  private async updateUserTelegramInfo(ctx: Context): Promise<void> {
+    const userRedisKey = `user:${ctx.from.username}`;
+
+    const user = await this.userService.updateTelegramInfo(
+      ctx.from.username,
+      ctx.message.chat.id,
+    );
+    await this.redis.set(userRedisKey, JSON.stringify(user.raw));
   }
 
   private async handleEnterConversation(ctx: Context): Promise<void> {
@@ -159,7 +164,14 @@ export class TelegramBotService {
   }
 
   private async handleStartCommand(ctx: Context): Promise<void> {
-    await this.createOrUpdateUser(ctx);
+    const userRedisKey = `user:${ctx.from.username}`;
+
+    const userField = await this.redis.get(userRedisKey);
+    if (userField) {
+      await this.updateUserTelegramInfo(ctx);
+    } else {
+      await this.createUser(ctx);
+    }
 
     await this.showMainMenu(ctx);
   }
@@ -200,9 +212,10 @@ export class TelegramBotService {
   }
 
   private async handleDeleteContext(ctx: Context): Promise<void> {
-    const currentUser = await this.userService.findByTelegramId(
-      ctx.from.username,
-    );
+    const userRedisKey = `user:${ctx.from.username}`;
+    const userField = await this.redis.get(userRedisKey);
+
+    const currentUser = userField ? JSON.parse(userField) : null;
     if (currentUser) {
       await this.messageService.deleteMessagesByUser(currentUser);
     }
@@ -211,11 +224,12 @@ export class TelegramBotService {
   }
 
   private async handleCheckInvalidChatId(ctx: Context): Promise<void> {
-    const currentUser = await this.userService.findByTelegramId(
-      ctx.from.username,
-    );
+    const userRedisKey = `user:${ctx.from.username}`;
+    const userField = await this.redis.get(userRedisKey);
+
+    const currentUser = userField ? JSON.parse(userField) : null;
     if (currentUser && !currentUser.telegramChatId) {
-      await this.createOrUpdateUser(ctx);
+      await this.updateUserTelegramInfo(ctx);
       await this.updateByUser(ctx.from.username, ctx.message.chat.id);
     }
   }
